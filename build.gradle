@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.gradle.test-retry' version '1.6.0'
 }
 
 repositories {
@@ -37,6 +38,10 @@ task sampleTest(type: Test) {
     systemProperty "cucumber.publish.quiet", "true"
     systemProperty "cucumber.features", "src/test/resources/features/test"
     systemProperties System.getProperties()
+    retry {
+        maxRetries = 2
+        maxFailures = 10
+    }
     useTestNG() {
         dependsOn clean
         useDefaultListeners = true
@@ -50,6 +55,10 @@ task sampleLocalTest(type: Test) {
     systemProperty "cucumber.publish.quiet", "true"
     systemProperty "cucumber.features", "src/test/resources/features/localtest"
     systemProperties System.getProperties()
+    retry {
+        maxRetries = 2
+        maxFailures = 10
+    }
     useTestNG() {
         dependsOn clean
         useDefaultListeners = true

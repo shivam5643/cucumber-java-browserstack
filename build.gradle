@@ -18,14 +18,14 @@ group = 'com.browserstack'
 version = '1.0-SNAPSHOT'
 description = 'cucumber-java-browserstack'
 
-// Get target Java version from property (passed from workflow) or default to 8
-def targetJavaVersion = project.findProperty('targetJavaVersion') ?: '8'
+// Get target Java version from environment or default to 8
+def targetJavaVersion = (System.getenv('TEST_JAVA_VERSION') ?: '8').toInteger()
 
 java {
     sourceCompatibility = JavaVersion.toVersion(targetJavaVersion)
     targetCompatibility = JavaVersion.toVersion(targetJavaVersion)
     toolchain {
-        languageVersion = JavaLanguageVersion.of(Integer.parseInt(targetJavaVersion))
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
 }
 

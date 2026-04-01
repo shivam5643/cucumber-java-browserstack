@@ -55,11 +55,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
-      - name: Set up Java 17 for Gradle
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Set up Gradle 7.6 for Java 8 and 11 compatibility
+        if: matrix.java != '17'
+        run: |
+          brew install gradle@7 || apt-get install -y gradle || choco install gradle --version=7.6
       - name: Run mvn test
         run: |
           mvn compile
@@ -73,11 +72,15 @@ jobs:
           mvn compile
           mvn test -P sample-test
       - name: Run gradle task sampleTest
+        env:
+          TEST_JAVA_VERSION: ${{ matrix.java }}
         run: |
-          gradle clean sampleTest -PtargetJavaVersion=${{ matrix.java }}
+          gradle clean sampleTest
       - name: Run gradle task sampleLocalTest
+        env:
+          TEST_JAVA_VERSION: ${{ matrix.java }}
         run: |
-          gradle clean sampleLocalTest -PtargetJavaVersion=${{ matrix.java }}
+          gradle clean sampleLocalTest
       - if: always()
         uses: actions/github-script@98814c53be79b1d30f795b907e553d8679345975
         id: status-check-completed

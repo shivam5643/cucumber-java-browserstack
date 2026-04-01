@@ -50,11 +50,16 @@ jobs:
             if (result.status !== 201) {
               console.log('Failed to create check run')
             }
-      - name: Set up Java
+      - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
+      - name: Set up Java 17 for Gradle
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       - name: Run mvn test
         run: |
           mvn compile

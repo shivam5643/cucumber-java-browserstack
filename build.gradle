@@ -18,9 +18,15 @@ group = 'com.browserstack'
 version = '1.0-SNAPSHOT'
 description = 'cucumber-java-browserstack'
 
+// Get target Java version from property (passed from workflow) or default to 8
+def targetJavaVersion = project.findProperty('targetJavaVersion') ?: '8'
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.toVersion(targetJavaVersion)
+    targetCompatibility = JavaVersion.toVersion(targetJavaVersion)
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(Integer.parseInt(targetJavaVersion))
+    }
 }
 
 def browserstackSDKArtifact = configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.find { it.name == 'browserstack-java-sdk' }

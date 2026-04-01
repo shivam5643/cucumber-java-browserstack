@@ -35,35 +35,37 @@ tasks.withType(Test) {
 }
 
 task sampleTest(type: Test) {
+    dependsOn clean
+    jvmArgs "-javaagent:${browserstackSDKArtifact.file}"
     systemProperty "cucumber.publish.quiet", "true"
     systemProperty "cucumber.features", "src/test/resources/features/test"
     systemProperties System.getProperties()
+    timeout = Duration.ofMinutes(10)
     retry {
         maxRetries = 2
         maxFailures = 10
     }
     useTestNG() {
-        dependsOn clean
         useDefaultListeners = true
         suites "src/test/resources/testng.xml"
-        jvmArgs "-javaagent:${browserstackSDKArtifact.file}"
     }
     scanForTestClasses = false
 }
 
 task sampleLocalTest(type: Test) {
+    dependsOn clean
+    jvmArgs "-javaagent:${browserstackSDKArtifact.file}"
     systemProperty "cucumber.publish.quiet", "true"
     systemProperty "cucumber.features", "src/test/resources/features/localtest"
     systemProperties System.getProperties()
+    timeout = Duration.ofMinutes(10)
     retry {
         maxRetries = 2
         maxFailures = 10
     }
     useTestNG() {
-        dependsOn clean
         useDefaultListeners = true
         suites "src/test/resources/testng.xml"
-        jvmArgs "-javaagent:${browserstackSDKArtifact.file}"
     }
     scanForTestClasses = false
 }

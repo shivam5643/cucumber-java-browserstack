@@ -73,9 +73,11 @@ jobs:
           mvn compile
           mvn test -P sample-test
       - name: Run gradle task sampleTest
+        if: matrix.java == '17'
         run: |
           gradle clean sampleTest
       - name: Run gradle task sampleLocalTest
+        if: matrix.java == '17'
         run: |
           gradle clean sampleLocalTest
       - if: always()

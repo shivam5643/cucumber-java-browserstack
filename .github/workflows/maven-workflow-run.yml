@@ -55,19 +55,16 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
-      - name: Set up Gradle 7.6 for Java 8 and 11 compatibility (macOS)
-        if: matrix.java != '17' && runner.os == 'macOS'
-        run: |
-          brew install gradle@7
-      - name: Set up Gradle 7.6 for Java 8 and 11 compatibility (Ubuntu)
-        if: matrix.java != '17' && runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gradle
-      - name: Set up Gradle 7.6 for Java 8 and 11 compatibility (Windows)
-        if: matrix.java != '17' && runner.os == 'Windows'
-        run: |
-          choco install gradle --version=7.6 -y
+      - name: Set up Gradle 7.6.4 (Java 8 and 11)
+        if: matrix.java != '17'
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '7.6.4'
+      - name: Set up Gradle 9.4.1 (Java 17)
+        if: matrix.java == '17'
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '9.4.1'
       - name: Run mvn test
         run: |
           mvn compile
@@ -81,13 +78,9 @@ jobs:
           mvn compile
           mvn test -P sample-test
       - name: Run gradle task sampleTest
-        env:
-          TEST_JAVA_VERSION: ${{ matrix.java }}
         run: |
           gradle clean sampleTest
       - name: Run gradle task sampleLocalTest
-        env:
-          TEST_JAVA_VERSION: ${{ matrix.java }}
         run: |
           gradle clean sampleLocalTest
       - if: always()

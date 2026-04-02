@@ -88,6 +88,16 @@ jobs:
       - name: Run gradle task sampleLocalTest
         run: |
           gradle clean sampleLocalTest
+      - name: Upload Gradle logs and reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gradle-logs-${{ matrix.java }}-${{ matrix.os }}
+          path: |
+            build/reports/tests/
+            build/test-results/
+            log/
+          retention-days: 7
       - if: always()
         uses: actions/github-script@98814c53be79b1d30f795b907e553d8679345975
         id: status-check-completed

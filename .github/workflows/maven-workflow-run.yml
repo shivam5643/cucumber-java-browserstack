@@ -90,7 +90,7 @@ jobs:
           gradle clean sampleLocalTest
       - name: Upload Gradle logs and reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: gradle-logs-${{ matrix.java }}-${{ matrix.os }}
           path: |

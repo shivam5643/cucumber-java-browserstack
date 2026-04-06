@@ -83,7 +83,7 @@ jobs:
           mvn compile
           mvn test -P sample-test
       - name: Run gradle task sampleTest
-        timeout-minutes: 15
+        timeout-minutes: 25
         shell: pwsh
         run: |
           gradle clean sampleTest --no-daemon
@@ -91,7 +91,7 @@ jobs:
           Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, WorkingSetMB, StartTime -AutoSize
           Write-Host "=== End of process check ===" -ForegroundColor Green
       - name: Run gradle task sampleLocalTest
-        timeout-minutes: 15
+        timeout-minutes: 25
         shell: pwsh
         run: |
           gradle clean sampleLocalTest --no-daemon

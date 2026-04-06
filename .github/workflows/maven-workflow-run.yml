@@ -86,18 +86,48 @@ jobs:
         timeout-minutes: 25
         shell: pwsh
         run: |
-          gradle clean sampleTest --no-daemon
-          Write-Host "=== Gradle sampleTest completed. Checking for running Java processes ===" -ForegroundColor Green
-          Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, WorkingSetMB, StartTime -AutoSize
-          Write-Host "=== End of process check ===" -ForegroundColor Green
+          # Start background monitor - logs running processes every 30 seconds
+          $monitor = Start-Job -ScriptBlock {
+            while ($true) {
+              $timestamp = Get-Date -Format 'HH:mm:ss'
+              Write-Output "[$timestamp] === Running Java/Gradle processes ==="
+              Get-Process -Name java,gradle -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime | Format-Table -AutoSize | Out-String
+              Start-Sleep -Seconds 30
+            }
+          }
+          try {
+            gradle clean sampleTest
+          } finally {
+            Stop-Job $monitor
+            Write-Host "=== Monitor output during test ==="
+            Receive-Job $monitor
+            Remove-Job $monitor
+            Write-Host "=== Java processes still alive after test ==="
+            Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime -AutoSize
+          }
       - name: Run gradle task sampleLocalTest
         timeout-minutes: 25
         shell: pwsh
         run: |
-          gradle clean sampleLocalTest --no-daemon
-          Write-Host "=== Gradle sampleLocalTest completed. Checking for running Java processes ===" -ForegroundColor Green
-          Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, WorkingSetMB, StartTime -AutoSize
-          Write-Host "=== End of process check ===" -ForegroundColor Green
+          # Start background monitor - logs running processes every 30 seconds
+          $monitor = Start-Job -ScriptBlock {
+            while ($true) {
+              $timestamp = Get-Date -Format 'HH:mm:ss'
+              Write-Output "[$timestamp] === Running Java/Gradle processes ==="
+              Get-Process -Name java,gradle -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime | Format-Table -AutoSize | Out-String
+              Start-Sleep -Seconds 30
+            }
+          }
+          try {
+            gradle clean sampleLocalTest
+          } finally {
+            Stop-Job $monitor
+            Write-Host "=== Monitor output during test ==="
+            Receive-Job $monitor
+            Remove-Job $monitor
+            Write-Host "=== Java processes still alive after test ==="
+            Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime -AutoSize
+          }
       - name: Upload Gradle logs and reports
         if: always()
         uses: actions/upload-artifact@v4

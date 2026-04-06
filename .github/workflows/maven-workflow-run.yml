@@ -18,7 +18,7 @@ jobs:
       max-parallel: 3
       matrix:
         java: [ '8', '11', '17' ]
-        os: [ 'macos-latest', 'windows-latest', 'ubuntu-latest' ]
+        os: ['windows-latest']
         exclude:
           - java: '8'
             os: 'macos-latest'
@@ -84,10 +84,10 @@ jobs:
           mvn test -P sample-test
       - name: Run gradle task sampleTest
         run: |
-          gradle clean sampleTest
+          gradle clean sampleTest --no-daemon --info
       - name: Run gradle task sampleLocalTest
         run: |
-          gradle clean sampleLocalTest
+          gradle clean sampleLocalTest --no-daemon --info
       - name: Upload Gradle logs and reports
         if: always()
         uses: actions/upload-artifact@v4

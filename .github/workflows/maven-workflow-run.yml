@@ -87,46 +87,104 @@ jobs:
         shell: pwsh
         run: |
           # Start background monitor - logs running processes every 30 seconds
-          $monitor = Start-Job -ScriptBlock {
+          $monitorScript = {
+            param($logFile)
             while ($true) {
               $timestamp = Get-Date -Format 'HH:mm:ss'
-              Write-Output "[$timestamp] === Running Java/Gradle processes ==="
-              Get-Process -Name java,gradle -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime | Format-Table -AutoSize | Out-String
+              $output = "[" + $timestamp + "] === Running Java/Gradle processes ===" 
+              Add-Content -Path $logFile -Value $output
+              $procs = Get-Process -Name java,gradle -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime
+              if ($procs) {
+                $procs | Format-Table -AutoSize | Out-String | Add-Content -Path $logFile
+              } else {
+                Add-Content -Path $logFile -Value "[No java/gradle processes found]"
+              }
               Start-Sleep -Seconds 30
             }
           }
+          $logFile = "$env:TEMP/gradle-monitor.log"
+          "" > $logFile  # Clear log file
+          $monitor = Start-Job -ScriptBlock $monitorScript -ArgumentList $logFile
+          
+          $gradleOutput = $null
           try {
-            gradle clean sampleTest
+            # Redirect gradle output to capture it
+            $gradleOutput = gradle clean sampleTest 2>&1 | Tee-Object -Variable gradleOutput
+          } catch {
+            Write-Host "Gradle process error: $_"
           } finally {
-            Stop-Job $monitor
-            Write-Host "=== Monitor output during test ==="
-            Receive-Job $monitor
-            Remove-Job $monitor
+            # Give monitor a moment to catch final state
+            Start-Sleep -Seconds 2
+            Stop-Job $monitor -ErrorAction SilentlyContinue
+            Remove-Job $monitor -ErrorAction SilentlyContinue
+            
+            Write-Host "=== Process Monitor Output ==="
+            if (Test-Path $logFile) {
+              Get-Content $logFile
+            } else {
+              Write-Host "No monitor log found"
+            }
+            
             Write-Host "=== Java processes still alive after test ==="
             Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime -AutoSize
+            
+            # Force kill any remaining gradle processes (safety)
+            Get-Process -Name gradle -ErrorAction SilentlyContinue | ForEach-Object {
+              Write-Host "Force killing gradle process: $($_.Id)"
+              Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+            }
           }
       - name: Run gradle task sampleLocalTest
         timeout-minutes: 25
         shell: pwsh
         run: |
           # Start background monitor - logs running processes every 30 seconds
-          $monitor = Start-Job -ScriptBlock {
+          $monitorScript = {
+            param($logFile)
             while ($true) {
               $timestamp = Get-Date -Format 'HH:mm:ss'
-              Write-Output "[$timestamp] === Running Java/Gradle processes ==="
-              Get-Process -Name java,gradle -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime | Format-Table -AutoSize | Out-String
+              $output = "[" + $timestamp + "] === Running Java/Gradle processes ===" 
+              Add-Content -Path $logFile -Value $output
+              $procs = Get-Process -Name java,gradle -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime
+              if ($procs) {
+                $procs | Format-Table -AutoSize | Out-String | Add-Content -Path $logFile
+              } else {
+                Add-Content -Path $logFile -Value "[No java/gradle processes found]"
+              }
               Start-Sleep -Seconds 30
             }
           }
+          $logFile = "$env:TEMP/gradle-monitor.log"
+          "" > $logFile  # Clear log file
+          $monitor = Start-Job -ScriptBlock $monitorScript -ArgumentList $logFile
+          
+          $gradleOutput = $null
           try {
-            gradle clean sampleLocalTest
+            # Redirect gradle output to capture it
+            $gradleOutput = gradle clean sampleLocalTest 2>&1 | Tee-Object -Variable gradleOutput
+          } catch {
+            Write-Host "Gradle process error: $_"
           } finally {
-            Stop-Job $monitor
-            Write-Host "=== Monitor output during test ==="
-            Receive-Job $monitor
-            Remove-Job $monitor
+            # Give monitor a moment to catch final state
+            Start-Sleep -Seconds 2
+            Stop-Job $monitor -ErrorAction SilentlyContinue
+            Remove-Job $monitor -ErrorAction SilentlyContinue
+            
+            Write-Host "=== Process Monitor Output ==="
+            if (Test-Path $logFile) {
+              Get-Content $logFile
+            } else {
+              Write-Host "No monitor log found"
+            }
+            
             Write-Host "=== Java processes still alive after test ==="
             Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, CPU, @{N='Mem(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}}, StartTime -AutoSize
+            
+            # Force kill any remaining gradle processes (safety)
+            Get-Process -Name gradle -ErrorAction SilentlyContinue | ForEach-Object {
+              Write-Host "Force killing gradle process: $($_.Id)"
+              Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+            }
           }
       - name: Upload Gradle logs and reports
         if: always()

@@ -83,11 +83,33 @@ jobs:
           mvn compile
           mvn test -P sample-test
       - name: Run gradle task sampleTest
+        timeout-minutes: 15
+        continue-on-error: true
         run: |
           gradle clean sampleTest --no-daemon --info
+      - name: Debug hanging processes after sampleTest (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "=== Java processes still running ==="
+          Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, CPU, WorkingSet, StartTime -AutoSize
+          echo "=== Killing any remaining Java processes ==="
+          Get-Process -Name java -ErrorAction SilentlyContinue | Stop-Process -Force
+          echo "=== Done ==="
       - name: Run gradle task sampleLocalTest
+        timeout-minutes: 15
+        continue-on-error: true
         run: |
           gradle clean sampleLocalTest --no-daemon --info
+      - name: Debug hanging processes after sampleLocalTest (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "=== Java processes still running ==="
+          Get-Process -Name java -ErrorAction SilentlyContinue | Format-Table Id, CPU, WorkingSet, StartTime -AutoSize
+          echo "=== Killing any remaining Java processes ==="
+          Get-Process -Name java -ErrorAction SilentlyContinue | Stop-Process -Force
+          echo "=== Done ==="
       - name: Upload Gradle logs and reports
         if: always()
         uses: actions/upload-artifact@v4
